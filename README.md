@@ -1,2 +1,2 @@
-# React Chatbot Using Watson Assistant
+#Watson Assistant API
 
