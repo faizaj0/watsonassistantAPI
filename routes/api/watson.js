@@ -1,41 +1,39 @@
 // 1. Import dependencies
 const express = require("express");
-const router = express.Router();
+const app = express.Router();
 const AssistantV2 = require("ibm-watson/assistant/v2");
 const { IamAuthenticator } = require("ibm-watson/auth");
 
-//WATSON NATURAL LANGUAGE UNDERSTANDING API//
+/////WATSON NATURAL LANGUAGE UNDERSTANDING API//////
 
-const NaturalLanguageUnderstandingV1 = require('ibm-watson/natural-language-understanding/v1');
+const NaturalLanguageUnderstandingV1 = require("ibm-watson/natural-language-understanding/v1");
 
 //creat Instance
-const naturalLanguageUnderstanding = new NaturalLanguageUnderstandingV1({
-  version: '2022-04-07',
+const NLU = new NaturalLanguageUnderstandingV1({
+  version: "2022-04-07",
   authenticator: new IamAuthenticator({
-    apikey:  process.env.NATURAL_LANGUAGE_UNDERSTANDING_APIKEY,
+    apikey: process.env.NATURAL_LANGUAGE_UNDERSTANDING_APIKEY,
   }),
   serviceUrl: process.env.NATURAL_LANGUAGE_UNDERSTANDING_URL,
 });
 
-
-naturalLanguageUnderstanding.analyze({
-  "text": "I want to find a course in natural language understanding using deep learning",
-  'features': {
-    'keywords': {
-      'sentiment': false,
-      'emotion': false,
-      'limit': 10
-    }
+// POST /api/watson/analyze
+app.post("/analyze", async (req, res) => {
+  try {
+    const output = await NLU.analyze({
+      text: req.body.text,
+      features: { keywords: {
+          sentiment: false,
+          emotion: false,
+          limit: 10, },
+      },
+    });
+    res.json(output["result"]);
+  } catch (err) {
+    res.send("There was an error processing your request.");
+    console.log(err);
   }
-})
-  .then(analysisResults => {
-    console.log(JSON.stringify(analysisResults, null, 2));
-  })
-  .catch(err => {
-    console.log('error:', err);
-  });
-
-
+});
 
 ///////////////////////////////////////////
 //WATSON ASSISTANT API //
@@ -58,7 +56,7 @@ const assistant = new AssistantV2({
 // 3. Route to Handle Session Tokens
 // GET /api/watson/session
 
-router.get("/session", async (req, res) => {
+app.get("/session", async (req, res) => {
   // If successs
   try {
     const session = await assistant.createSession({
@@ -66,7 +64,6 @@ router.get("/session", async (req, res) => {
     });
 
     console.log(session);
-
     res.json(session.result);
 
     // If fail
@@ -78,9 +75,8 @@ router.get("/session", async (req, res) => {
 
 // 4. Handle Messages
 
-
 // POST /api/watson/message
-router.post("/message", async (req, res) => {
+app.post("/message", async (req, res) => {
   // Construct payload
   payload = {
     assistantId: process.env.WATSON_ASSISTANT_ID,
@@ -94,6 +90,7 @@ router.post("/message", async (req, res) => {
   // If successs
   try {
     const message = await assistant.message(payload);
+    res.send("POST Request Called");
     res.json(message["result"]);
 
     // If fail
@@ -104,4 +101,4 @@ router.post("/message", async (req, res) => {
 });
 
 // 5. Export routes
-module.exports = router;
+module.exports = app;
