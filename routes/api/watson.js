@@ -4,6 +4,42 @@ const router = express.Router();
 const AssistantV2 = require("ibm-watson/assistant/v2");
 const { IamAuthenticator } = require("ibm-watson/auth");
 
+//WATSON NATURAL LANGUAGE UNDERSTANDING API//
+
+const NaturalLanguageUnderstandingV1 = require('ibm-watson/natural-language-understanding/v1');
+
+//creat Instance
+const naturalLanguageUnderstanding = new NaturalLanguageUnderstandingV1({
+  version: '2022-04-07',
+  authenticator: new IamAuthenticator({
+    apikey:  process.env.NATURAL_LANGUAGE_UNDERSTANDING_APIKEY,
+  }),
+  serviceUrl: process.env.NATURAL_LANGUAGE_UNDERSTANDING_URL,
+});
+
+
+naturalLanguageUnderstanding.analyze({
+  "text": "I want to find a course in natural language understanding using deep learning",
+  'features': {
+    'keywords': {
+      'sentiment': false,
+      'emotion': false,
+      'limit': 10
+    }
+  }
+})
+  .then(analysisResults => {
+    console.log(JSON.stringify(analysisResults, null, 2));
+  })
+  .catch(err => {
+    console.log('error:', err);
+  });
+
+
+
+///////////////////////////////////////////
+//WATSON ASSISTANT API //
+
 // 2. Create Instance of Assistant
 
 // 2.1 First authenticate
@@ -21,6 +57,7 @@ const assistant = new AssistantV2({
 
 // 3. Route to Handle Session Tokens
 // GET /api/watson/session
+
 router.get("/session", async (req, res) => {
   // If successs
   try {
@@ -40,6 +77,8 @@ router.get("/session", async (req, res) => {
 });
 
 // 4. Handle Messages
+
+
 // POST /api/watson/message
 router.post("/message", async (req, res) => {
   // Construct payload
