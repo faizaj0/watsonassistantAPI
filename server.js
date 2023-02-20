@@ -2,6 +2,14 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken"); // JSON Web Token
+
+// Secret key for signing and verifying JSON Web Tokens
+const JWT_SECRET =
+  'wsrakfjhias:dgjsan@@!£!£"!£!"@£"@%"^"$"wsfsdflkwnsbdfgwjakgsnv';
+
+app.use(cors());
 
 require("dotenv").config();
 
@@ -19,31 +27,75 @@ mongoose
   })
   .catch((e) => console.log(e));
 
-
-require("./user.js")
-const user = mongoose.model("UserInfo")
+require("./user.js");
+const user = mongoose.model("UserInfo");
 
 app.use(express.json());
 
-app.post("/register", async (req,res) => {
+app.post("/register", async (req, res) => {
+  const { username, password, email, experiencelvl } = req.body;
 
-  const {username,password,email,experiencelvl} = req.body;
-  try{
+  // Hash the password
+  const hashedPassword = bcrypt.hashSync(password, 10);
+
+  try {
+    const oldUser = await user.findOne({ username });
+
+    if (oldUser) {
+      return res.send({
+        error: "Username already exists, please choose a different username",
+      });
+    }
     await user.create({
       username,
-      password,
+      password: hashedPassword,
       email,
       experiencelvl,
-    })
-    res.send({status: "ok"})
-
-  }catch(error){
-    console.log(error)
-    res.send(error)
+    });
+    res.send({ status: "ok" });
+  } catch (error) {
+    console.log(error);
+    res.send(error);
   }
-})
+});
 
+app.post("/login", async (req, res) => {
+  const { username, password } = req.body;
+  const loggedInUser = await user.findOne({ username });
+  if (!loggedInUser) {
+    return res.send({ error: "User not found" });
+  }
+  if (await bcrypt.compare(password, loggedInUser.password)) {
+    const token = jwt.sign({ username: loggedInUser.username }, JWT_SECRET);
 
+    if (res.status(201)) {
+      return res.json({ status: "ok", data: token });
+    } else {
+      return res.send({ error: "error" });
+    }
+  }
+  return res.json({ error: "Incorrect username or password." });
+});
+
+app.post("/userdata", async (req, res) => {
+  const { token } = req.body;
+  try {
+    const foundUser = jwt.verify(token, JWT_SECRET);
+    console.log(foundUser)
+    const username = foundUser.username;
+    user.findOne({ username: username })
+      .then((data) => {
+        res.send({ status: "ok", data: data });
+      })
+      .catch((error) => {
+        console.log(error);
+        res.send({ error: "error", data: "error" });
+      });
+  } catch (error) {
+    console.log(error);
+    res.send({ error: "error", data: "error" });
+  }
+});
 ///////////////////////////////////////////////////////////////////////////////////
 
 // 1. Allow parsing on request bodies
@@ -68,24 +120,6 @@ const watsonRoutes = require("./routes/api/watson");
 
 // 4. Direct requests to /api/watson to Watson Routes
 app.use("/api/watson", watsonRoutes);
-
-// MONGODB API REQUESTS ///
-
-app.post("/post", async (req, res) => {
-  console.log(req.body);
-
-  const { data } = req.body;
-
-  try {
-    if (data == "hello") {
-      res.send({ status: "ok" });
-    } else {
-      res.send({ status: "user not found" });
-    }
-  } catch (error) {
-    res.send(error);
-  }
-});
 
 // 5. Start server
 const port = process.env.PORT || 5000;
