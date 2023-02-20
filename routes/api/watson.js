@@ -4,6 +4,16 @@ const app = express.Router();
 const AssistantV2 = require("ibm-watson/assistant/v2");
 const { IamAuthenticator } = require("ibm-watson/auth");
 
+const cors = require('cors')
+
+app.use(cors({
+  origin: 'http://localhost:3000',
+  methods: ['GET', 'POST', 'PUT', 'DELETE, OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}))
+
+
+
 /////WATSON NATURAL LANGUAGE UNDERSTANDING API//////
 
 const NaturalLanguageUnderstandingV1 = require("ibm-watson/natural-language-understanding/v1");
@@ -19,6 +29,8 @@ const NLU = new NaturalLanguageUnderstandingV1({
 
 // POST /api/watson/analyze
 app.post("/analyze", async (req, res) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   try {
     const output = await NLU.analyze({
       text: req.body.text,
@@ -57,6 +69,8 @@ const assistant = new AssistantV2({
 // GET /api/watson/session
 
 app.get("/session", async (req, res) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   // If successs
   try {
     const session = await assistant.createSession({
@@ -77,6 +91,10 @@ app.get("/session", async (req, res) => {
 
 // POST /api/watson/message
 app.post("/message", async (req, res) => {
+  res.header("Access-Control-Allow-Origin", "http://localhost:3000");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  
   // Construct payload
   payload = {
     assistantId: process.env.WATSON_ASSISTANT_ID,
@@ -90,7 +108,6 @@ app.post("/message", async (req, res) => {
   // If successs
   try {
     const message = await assistant.message(payload);
-    res.send("POST Request Called");
     res.json(message["result"]);
 
     // If fail
@@ -100,5 +117,10 @@ app.post("/message", async (req, res) => {
   }
 });
 
+
+
+
 // 5. Export routes
 module.exports = app;
+
+
