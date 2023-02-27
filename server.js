@@ -81,9 +81,10 @@ app.post("/userdata", async (req, res) => {
   const { token } = req.body;
   try {
     const foundUser = jwt.verify(token, JWT_SECRET);
-    console.log(foundUser)
+    console.log(foundUser);
     const username = foundUser.username;
-    user.findOne({ username: username })
+    user
+      .findOne({ username: username })
       .then((data) => {
         res.send({ status: "ok", data: data });
       })
@@ -96,6 +97,142 @@ app.post("/userdata", async (req, res) => {
     res.send({ error: "error", data: "error" });
   }
 });
+
+//BOOKMARK APIS//
+
+app.post("/getbookmarks", async (req, res) => {
+  const { token } = req.body;
+  try {
+    const foundUser = jwt.verify(token, JWT_SECRET);
+    console.log(foundUser);
+    const username = foundUser.username;
+    const userData = await user.findOne({ username: username });
+    const bookmarks = userData.bookmarks;
+    res.send({ status: "ok", data: bookmarks });
+  } catch (error) {
+    console.log(error);
+    res.send({ error: "error", data: "error" });
+  }
+});
+
+
+app.post("/addbookmark", async (req, res) => {
+  const { courseID } = req.body;
+  const { token } = req.body;
+  try {
+    const foundUser = jwt.verify(token, JWT_SECRET);
+    console.log(foundUser);
+    const username = foundUser.username;
+    user.findOneAndUpdate(
+      { username: username },
+      { $addToSet: { bookmarks: courseID } },
+      { new: true }
+    )
+      .then((data) => {
+        res.send({ status: "ok", data: data });
+      })
+      .catch((error) => {
+        console.log(error);
+        res.send({ error: "error", data: "error" });
+      });
+  } catch (error) {
+    console.log(error);
+    res.send({ error: "error", data: "error" });
+  }
+});
+
+app.post("/deletebookmark", async (req, res) => {
+  const { courseID } = req.body;
+  const { token } = req.body;
+  try {
+    const foundUser = jwt.verify(token, JWT_SECRET);
+    console.log(foundUser);
+    const username = foundUser.username;
+    user.findOneAndUpdate(
+      { username: username },
+      { $pull: { bookmarks: courseID } }, // Use $pull instead of $addToSet
+      { new: true }
+    )
+      .then((data) => {
+        res.send({ status: "ok", data: data });
+      })
+      .catch((error) => {
+        console.log(error);
+        res.send({ error: "error", data: "error" });
+      });
+  } catch (error) {
+    console.log(error);
+    res.send({ error: "error", data: "error" });
+  }
+});
+
+//COURSE APIs//
+
+app.post("/getCompletedCourses", async (req, res) => {
+  const { token } = req.body;
+  try {
+    const foundUser = jwt.verify(token, JWT_SECRET);
+    console.log(foundUser);
+    const username = foundUser.username;
+    const userData = await user.findOne({ username: username });
+    const completedCourses = userData.completedCourses;
+    res.send({ status: "ok", data: completedCourses });
+  } catch (error) {
+    console.log(error);
+    res.send({ error: "error", data: "error" });
+  }
+});
+
+app.post("/addCompletedCourse", async (req, res) => {
+  const { courseID } = req.body;
+  const { token } = req.body;
+  try {
+    const foundUser = jwt.verify(token, JWT_SECRET);
+    console.log(foundUser);
+    const username = foundUser.username;
+    user.findOneAndUpdate(
+      { username: username },
+      { $addToSet: { completedCourses: courseID } },
+      { new: true }
+    )
+      .then((data) => {
+        res.send({ status: "ok", data: data });
+      })
+      .catch((error) => {
+        console.log(error);
+        res.send({ error: "error", data: "error" });
+      });
+  } catch (error) {
+    console.log(error);
+    res.send({ error: "error", data: "error" });
+  }
+});
+
+app.post("/deleteCompletedCourse", async (req, res) => {
+  const { courseID } = req.body;
+  const { token } = req.body;
+  try {
+    const foundUser = jwt.verify(token, JWT_SECRET);
+    console.log(foundUser);
+    const username = foundUser.username;
+    user.findOneAndUpdate(
+      { username: username },
+      { $pull: { completedCourse: courseID } }, // Use $pull instead of $addToSet
+      { new: true }
+    )
+      .then((data) => {
+        res.send({ status: "ok", data: data });
+      })
+      .catch((error) => {
+        console.log(error);
+        res.send({ error: "error", data: "error" });
+      });
+  } catch (error) {
+    console.log(error);
+    res.send({ error: "error", data: "error" });
+  }
+});
+
 ///////////////////////////////////////////////////////////////////////////////////
 
 // 1. Allow parsing on request bodies
