@@ -217,7 +217,7 @@ app.post("/deleteCompletedCourse", async (req, res) => {
     const username = foundUser.username;
     user.findOneAndUpdate(
       { username: username },
-      { $pull: { completedCourse: courseID } }, // Use $pull instead of $addToSet
+      { $pull: { completedCourses: courseID } }, // Use $pull instead of $addToSet
       { new: true }
     )
       .then((data) => {
